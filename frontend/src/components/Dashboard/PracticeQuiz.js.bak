@@ -1,0 +1,306 @@
+          {quizHistory.length > 0 && (
+            <Paper elevation={1} sx={{ p: 3, mt: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Question History
+              </Typography>
+              
+              <List>
+                {quizHistory.map((item, index) => (
+                  <React.Fragment key={index}>
+                    <ListItem alignItems="flex-start" sx={{ flexDirection: 'column', pt: 2, pb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 1 }}>
+                        <Typography component="span" variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                          Q{index + 1}:
+                        </Typography>
+                        <Chip 
+                          label={item.skill} 
+                          size="small" 
+                          color="primary" 
+                          variant="outlined" 
+                          sx={{ mx: 1 }} 
+                        />
+                        <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                          <Chip 
+                            label={item.difficulty} 
+                            color={getDifficultyColor(item.difficulty)}
+                            size="small"
+                          />
+                          <Chip 
+                            label={item.type} 
+                            color={getTypeColor(item.type)}
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                      
+                      <Typography variant="body1" sx={{ width: '100%', mb: 2 }}>
+                        {item.question}
+                      </Typography>
+                      
+                      <Box sx={{ width: '100%' }}>
+                        <Typography component="div" variant="subtitle2" sx={{ mb: 1 }}>
+                          Options:
+                        </Typography>
+                        <Grid container spacing={1} sx={{ ml: 2 }}>
+                          {item.options.map((option, optIndex) => (
+                            <Grid item xs={12} key={optIndex}>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: 
+                                    optIndex === item.correctAnswer ? 'success.main' :
+                                    optIndex === item.userAnswer && optIndex !== item.correctAnswer ? 'error.main' :
+                                    'text.primary',
+                                  fontWeight: 
+                                    optIndex === item.correctAnswer || optIndex === item.userAnswer ? 'bold' : 'normal'
+                                }}
+                              >
+                                {String.fromCharCode(65 + optIndex)}) {option}
+                                {optIndex === item.userAnswer && (
+                                  <span> (Your answer)</span>
+                                )}
+                                {optIndex === item.correctAnswer && optIndex !== item.userAnswer && (
+                                  <span> (Correct answer)</span>
+                                )}
+                              </Typography>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                      
+                      <Box sx={{ width: '100%', mt: 2, bgcolor: 'background.paper', p: 2, borderRadius: 1 }}>
+                        <Typography component="div" variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                          {item.isCorrect ? (
+                            <>
+                              <CheckCircleIcon fontSize="small" color="success" sx={{ mr: 1 }} />
+                              <span>Correct!</span>
+                            </>
+                          ) : (
+                            <>
+                              <CancelIcon fontSize="small" color="error" sx={{ mr: 1 }} />
+                              <span>Incorrect</span>
+                            </>
+                          )}
+                        </Typography>
+                        <Typography variant="body2">
+                          {item.explanation}
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                    {index < quizHistory.length - 1 && <Divider component="li" />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </Paper>
+          )} 
+
+// Generate PDF with quiz results
+const generateQuizPDF = () => {
+  const doc = new jsPDF();
+  const title = `Practice Quiz Results - ${new Date().toLocaleDateString()}`;
+  
+  // Add title
+  doc.setFontSize(18);
+  doc.text(title, 14, 20);
+  
+  // Add job description summary (full text with proper word wrapping)
+  doc.setFontSize(12);
+  doc.text('Job Description:', 14, 30);
+  
+  doc.setFontSize(10);
+  const splitJobDesc = doc.splitTextToSize(jobDescription, 180);
+  doc.text(splitJobDesc, 14, 40);
+  
+  // Calculate the new Y position after the job description
+  let currentY = 40 + (splitJobDesc.length * 5);
+  currentY += 15; // Add some spacing
+  
+  // Add skills section
+  doc.setFontSize(12);
+  doc.text('Skills Tested:', 14, currentY);
+  currentY += 10;
+  
+  const uniqueSkills = [...new Set(quizHistory.map(item => item.skill))];
+  doc.setFontSize(10);
+  uniqueSkills.forEach((skill, index) => {
+    doc.text(skill, 14, currentY);
+    currentY += 6;
+  });
+  
+  currentY += 10; // Add some spacing
+  
+  // Add quiz results with more detailed statistics
+  doc.setFontSize(12);
+  doc.text('Quiz Performance Summary:', 14, currentY);
+  currentY += 10;
+  
+  // Calculate overall stats
+  const totalQuestions = quizHistory.length;
+  const correctAnswers = quizHistory.filter(item => item.isCorrect).length;
+  const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+  
+  // Overall score
+  doc.setFontSize(10);
+  doc.text(`Overall Score: ${score}% (${correctAnswers}/${totalQuestions} correct)`, 14, currentY);
+  currentY += 6;
+  
+  // Calculate skill-specific performance
+  const skillPerformance = {};
+  uniqueSkills.forEach(skill => {
+    const skillQuestions = quizHistory.filter(item => item.skill === skill);
+    const skillCorrect = skillQuestions.filter(item => item.isCorrect).length;
+    skillPerformance[skill] = {
+      total: skillQuestions.length,
+      correct: skillCorrect,
+      score: Math.round((skillCorrect / skillQuestions.length) * 100)
+    };
+  });
+  
+  // Add skill-specific performance
+  doc.text('Performance by Skill:', 14, currentY);
+  currentY += 6;
+  
+  Object.entries(skillPerformance).forEach(([skill, data]) => {
+    doc.text(`${skill}: ${data.score}% (${data.correct}/${data.total})`, 20, currentY);
+    currentY += 5;
+  });
+  
+  currentY += 8;
+  
+  // Calculate difficulty-specific performance
+  const difficultyLevels = [...new Set(quizHistory.map(item => item.difficulty))];
+  const difficultyPerformance = {};
+  
+  difficultyLevels.forEach(difficulty => {
+    const difficultyQuestions = quizHistory.filter(item => item.difficulty === difficulty);
+    const difficultyCorrect = difficultyQuestions.filter(item => item.isCorrect).length;
+    difficultyPerformance[difficulty] = {
+      total: difficultyQuestions.length,
+      correct: difficultyCorrect,
+      score: Math.round((difficultyCorrect / difficultyQuestions.length) * 100)
+    };
+  });
+  
+  // Add difficulty-specific performance
+  doc.text('Performance by Difficulty:', 14, currentY);
+  currentY += 6;
+  
+  Object.entries(difficultyPerformance).forEach(([difficulty, data]) => {
+    doc.text(`${difficulty}: ${data.score}% (${data.correct}/${data.total})`, 20, currentY);
+    currentY += 5;
+  });
+  
+  currentY += 15;
+  
+  // Create table for questions and answers - full text
+  const tableColumn = ['Skill', 'Question', 'Your Answer', 'Correct?'];
+  const tableRows = quizHistory.map(item => [
+    item.skill,
+    item.question,
+    item.options[item.userAnswer],
+    item.isCorrect ? 'Yes' : 'No'
+  ]);
+  
+  // Use autoTable plugin with column width adjustments
+  autoTable(doc, {
+    startY: currentY,
+    head: [tableColumn],
+    body: tableRows,
+    headStyles: { fillColor: [66, 133, 244] },
+    columnStyles: {
+      0: { cellWidth: 40 }, // Skill column
+      1: { cellWidth: 'auto' }, // Question column (auto-width)
+      2: { cellWidth: 60 }, // Answer column
+      3: { cellWidth: 20 } // Correct column
+    },
+    styles: { overflow: 'linebreak', cellPadding: 3 },
+    willDrawCell: function(data) {
+      // Ensure text wraps properly in the table
+      if (data.row.section === 'body') {
+        data.cell.styles.overflow = 'linebreak';
+      }
+    }
+  });
+  
+  // Add a section for each question with full details
+  const questionsStartY = doc.lastAutoTable.finalY + 20;
+  
+  doc.setFontSize(14);
+  doc.text('Detailed Questions and Answers:', 14, questionsStartY);
+  let detailY = questionsStartY + 15;
+  
+  // Add each question with full details (add new pages as needed)
+  quizHistory.forEach((item, index) => {
+    // Check if we need a new page
+    if (detailY > 270) {
+      doc.addPage();
+      detailY = 20;
+    }
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    
+    // Question number and skill
+    doc.setFont(undefined, 'bold');
+    doc.text(`Question ${index + 1}: ${item.skill}`, 14, detailY);
+    detailY += 8;
+    
+    // Add difficulty and type
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+    doc.text(`Difficulty: ${item.difficulty} | Type: ${item.type}`, 14, detailY);
+    detailY += 8;
+    
+    // Question text
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(11);
+    const questionText = doc.splitTextToSize(item.question, 180);
+    doc.text(questionText, 14, detailY);
+    detailY += (questionText.length * 5) + 5;
+    
+    // Options
+    doc.text('Options:', 14, detailY);
+    detailY += 6;
+    
+    item.options.forEach((option, optIndex) => {
+      const prefix = String.fromCharCode(65 + optIndex) + ') '; // A), B), C), D)
+      const isSelected = optIndex === item.userAnswer;
+      const isCorrect = optIndex === item.correctAnswer;
+      
+      // Highlight the selected and correct answers
+      if (isSelected || isCorrect) {
+        if (isSelected && isCorrect) {
+          doc.setTextColor(0, 128, 0); // Green for correct selection
+        } else if (isSelected) {
+          doc.setTextColor(255, 0, 0); // Red for incorrect selection
+        } else if (isCorrect) {
+          doc.setTextColor(0, 128, 0); // Green for correct answer
+        }
+      } else {
+        doc.setTextColor(0, 0, 0); // Black for other options
+      }
+      
+      const optionText = doc.splitTextToSize(prefix + option, 170);
+      doc.text(optionText, 20, detailY);
+      detailY += (optionText.length * 5) + 5;
+    });
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    // Explanation
+    if (item.explanation) {
+      doc.text('Explanation:', 14, detailY);
+      detailY += 6;
+      
+      const explanationText = doc.splitTextToSize(item.explanation, 170);
+      doc.text(explanationText, 20, detailY);
+      detailY += (explanationText.length * 5) + 15; // Extra space after explanation
+    } else {
+      detailY += 10;
+    }
+  });
+  
+  // Save the PDF
+  doc.save(`practice-quiz-results-${new Date().getTime()}.pdf`);
+}; 
