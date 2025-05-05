@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Navbar from './components/UI/Navbar';
@@ -15,20 +15,9 @@ import PracticeQuiz from './components/Dashboard/PracticeQuiz';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import NotificationSnackbar from './components/UI/NotificationSnackbar';
 import UserProfile from './components/User/UserProfile';
-import testBackendConnection from './testConnection';
+import TestConnection from './testConnection';
 
 function App() {
-  useEffect(() => {
-    testBackendConnection()
-      .then(success => {
-        if (success) {
-          console.log('Successfully connected to the backend API!');
-        } else {
-          console.error('Failed to connect to the backend API.');
-        }
-      });
-  }, []);
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
@@ -38,6 +27,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/test-connection" element={<TestConnection />} />
           <Route 
             path="/dashboard" 
             element={

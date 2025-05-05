@@ -1,59 +1,61 @@
-// Simple test script to check the connection to the Firebase Functions API
-const FIREBASE_API_URL = 'https://us-central1-se11-cf96b.cloudfunctions.net';
+import React, { useState, useEffect } from 'react';
 
-async function testBackendConnection() {
-  try {
-    // Test the test endpoint
-    console.log('Testing connection to Firebase Functions test endpoint...');
-    const testResponse = await fetch(`${FIREBASE_API_URL}/test`);
-    
-    if (!testResponse.ok) {
-      console.error(`Test endpoint error: ${testResponse.status}`);
-      return false;
+// Production API URL
+const API_URL = 'https://us-central1-se11-cf96b.cloudfunctions.net/api';
+
+function TestConnection() {
+  const [connectionStatus, setConnectionStatus] = useState('Checking...');
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        console.log('Testing connection to API...');
+        const response = await fetch(`${API_URL}/test`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setConnectionStatus(`Connected! Response: ${data.message}`);
+        setError(null);
+      } catch (err) {
+        console.error('Connection error:', err);
+        setConnectionStatus('Failed to connect');
+        setError(err.message);
+      }
     }
-    
-    const testData = await testResponse.json();
-    console.log('Firebase Test endpoint response:', testData);
-    
-    // Test the API endpoint
-    console.log('Testing connection to Firebase Functions API endpoint...');
-    const apiResponse = await fetch(`${FIREBASE_API_URL}/api/test`);
-    
-    if (!apiResponse.ok) {
-      console.error(`API endpoint error: ${apiResponse.status}`);
-      return false;
-    }
-    
-    const apiData = await apiResponse.json();
-    console.log('Firebase API endpoint response:', apiData);
-    
-    // Test fetching mock reports
-    console.log('Testing API reports endpoint...');
-    const reportsResponse = await fetch(`${FIREBASE_API_URL}/api/reports/user123`);
-    
-    if (!reportsResponse.ok) {
-      console.error(`Reports endpoint error: ${reportsResponse.status}`);
-      return false;
-    }
-    
-    const reportsData = await reportsResponse.json();
-    console.log('Reports endpoint response:', reportsData);
-    console.log(`Found ${reportsData.reports.length} mock reports`);
-    
-    return true;
-  } catch (error) {
-    console.error('Connection error:', error);
-    return false;
-  }
+
+    checkConnection();
+  }, []);
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h2>API Connection Test</h2>
+      <p>Testing connection to: <code>{API_URL}</code></p>
+      <div style={{ 
+        padding: '15px', 
+        borderRadius: '5px',
+        backgroundColor: connectionStatus.includes('Connected') ? '#e0ffe0' : '#ffe0e0'
+      }}>
+        <p><strong>Status:</strong> {connectionStatus}</p>
+        {error && (
+          <div>
+            <p><strong>Error:</strong> {error}</p>
+            <div style={{ marginTop: '10px' }}>
+              <h3>Troubleshooting:</h3>
+              <ul>
+                <li>Check if the Firebase Function is deployed and running</li>
+                <li>Verify your network connection</li>
+                <li>Check browser console for detailed error messages</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-// Export the function so it can be called from the browser console
-window.testBackendConnection = testBackendConnection;
-
-// Self-executing function to run the test when this script is loaded
-(async () => {
-  const result = await testBackendConnection();
-  console.log('Connection test result:', result ? 'SUCCESS' : 'FAILED');
-})();
-
-export default testBackendConnection; 
+export default TestConnection; 

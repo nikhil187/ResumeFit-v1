@@ -2,6 +2,12 @@
 
 ResumeFit is a comprehensive application that helps job seekers match their resumes with job descriptions, providing detailed feedback on skill matches, generating quiz questions, and offering insights to improve job compatibility.
 
+## Production Deployment
+
+The application is deployed and available at:
+- Frontend: [https://se11-cf96b.web.app](https://se11-cf96b.web.app)
+- Backend API: `https://us-central1-se11-cf96b.cloudfunctions.net/api`
+
 ## Features
 
 * Resume analysis against job descriptions
@@ -21,11 +27,20 @@ The project consists of two main components:
 1. **Frontend**: Located in `frontend`
 2. **Backend API**: Located in `resume-matcher-api`
 
-## Setup and Running
+## Production Configuration
 
-### Manual Setup
+The frontend application is configured to use the Firebase Functions backend API at:
+```
+https://us-central1-se11-cf96b.cloudfunctions.net/api
+```
 
-#### Backend Setup
+This is the production URL for the backend API. This version of the repository contains the production-ready code with this URL configured.
+
+## Local Development Setup
+
+If you want to run the application locally for development, follow these steps:
+
+### Backend Setup
 
 1. Navigate to the backend directory:
    ```
@@ -50,7 +65,7 @@ The project consists of two main components:
    npm start
    ```
 
-#### Frontend Setup
+### Frontend Setup
 
 1. Navigate to the frontend directory:
    ```
@@ -71,10 +86,10 @@ The project consists of two main components:
 
 ## Testing the Connection
 
-After starting both the backend and frontend servers, you can test the connection by navigating to:
+You can test the connection to the production API by navigating to:
 
 ```
-http://localhost:3000/test-connection
+https://se11-cf96b.web.app/test-connection
 ```
 
 This will display a page showing whether the frontend can connect to the backend API.

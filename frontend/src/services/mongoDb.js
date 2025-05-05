@@ -1,4 +1,4 @@
-// Use the Firebase Functions URL instead of directly connecting to Express backend
+// Production API URL (Firebase Functions)
 const API_URL = 'https://us-central1-se11-cf96b.cloudfunctions.net/api';
 
 export async function saveReport(userId, reportData) {
